@@ -214,7 +214,11 @@ function session(options) {
     req.sessionStore = store;
 
     // get the session ID from the cookie
-    var cookieId = req.sessionID = getcookie(req, name, secrets);
+    var tmpCookie = getcookie(req, name, secrets);
+    var cookieId = req.sessionID = tmpCookie.val;
+
+    // get the placeholder from the cookie
+    req.placeholder = tmpCookie.placeholder;
 
     // set-cookie
     onHeaders(res, function(){
@@ -240,7 +244,7 @@ function session(options) {
       }
 
       // set cookie
-      setcookie(res, name, req.sessionID, secrets[0], req.session.cookie.data);
+      setcookie(res, name, req.sessionID, secrets[0], req.session.cookie.data, req.placeholder);
     });
 
     // proxy end() to commit the session
@@ -506,7 +510,7 @@ function generateSessionId(sess) {
 /**
  * Get the session ID cookie from request.
  *
- * @return {string}
+ * @return {{val: (String|Boolean|undefined), placeholder: string}}
  * @private
  */
 
@@ -514,6 +518,7 @@ function getcookie(req, name, secrets) {
   var header = req.headers.cookie;
   var raw;
   var val;
+  var placeholder;
 
   // read from cookie header
   if (header) {
@@ -522,6 +527,13 @@ function getcookie(req, name, secrets) {
     raw = cookies[name];
 
     if (raw) {
+      if (raw.substr(0, 2) === 'e:') {
+        var idx = raw.indexOf('s:');
+        if (idx !== -1) {
+          placeholder = raw.substr(0, idx).slice(2);
+          raw = raw.substr(idx);
+        }
+      }
       if (raw.substr(0, 2) === 's:') {
         val = unsigncookie(raw.slice(2), secrets);
 
@@ -566,7 +578,7 @@ function getcookie(req, name, secrets) {
     }
   }
 
-  return val;
+  return { val: val, placeholder: placeholder };
 }
 
 /**
@@ -636,9 +648,13 @@ function issecure(req, trustProxy) {
  * @private
  */
 
-function setcookie(res, name, val, secret, options) {
-  var signed = 's:' + signature.sign(val, secret);
-  var data = cookie.serialize(name, signed, options);
+function setcookie(res, name, val, secret, options, placeholder) {
+  var value = '';
+  if (typeof placeholder === 'string') {
+    value = 'e:' + placeholder;
+  }
+  value += 's:' + signature.sign(val, secret);
+  var data = cookie.serialize(name, value, options);
 
   debug('set-cookie %s', data);
 

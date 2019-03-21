@@ -1,13 +1,10 @@
 {
-  "name": "express-session",
-  "version": "1.15.6",
-  "description": "Simple session middleware for Express",
-  "author": "TJ Holowaychuk <tj@vision-media.ca> (http://tjholowaychuk.com)",
-  "contributors": [
-    "Douglas Christopher Wilson <doug@somethingdoug.com>",
-    "Joe Wagner <njwjs722@gmail.com>"
-  ],
-  "repository": "expressjs/session",
+  "name": "express-session-with-placeholder",
+  "version": "0.0.3",
+  "description": "Simple fork of Express session middleware",
+  "author": "Gabriel Colson (http://github.com/gabrielcolson)",
+  "homepage": "https://github.com/gabrielcolson/express-session-with-placeholder#readme",
+  "repository": "gabrielcolson/express-session-with-placeholder",
   "license": "MIT",
   "dependencies": {
     "cookie": "0.3.1",

@@ -68,6 +68,53 @@ describe('session()', function(){
     })
   })
 
+  it('should create a new session with a placeholder', function (done) {
+    var store = new session.MemoryStore()
+    var server = createServer({ store: store }, function (req, res) {
+      req.session.active = true
+      req.placeholder = 'myPlaceholder';
+      res.end('session active')
+    });
+
+    request(server)
+    .get('/')
+    .expect(shouldSetCookieWithPlaceholder('connect.sid', 'myPlaceholder'))
+    .expect(200, 'session active', function (err, res) {
+      if (err) return done(err)
+      store.length(function (err, len) {
+        if (err) return done(err)
+        assert.strictEqual(len, 1)
+        done()
+      })
+    })
+  });
+
+  it('should get the placeholder in req', function(done) {
+    var app = express()
+      .use(createSession())
+      .get('/', function(req, res){
+        req.placeholder = 'foo';
+        res.end();
+      })
+      .get('/validate', function(req, res) {
+        if (req.placeholder !== 'foo')
+          return res.status(400).end();
+        return res.end();
+      });
+
+    request(app)
+      .get('/')
+      .expect(200, '', function (err, res) {
+        if (err) {
+          return done(err);
+        }
+        request(app)
+          .get('/validate')
+          .set('Cookie', cookie(res))
+          .expect(200, '', done);
+      });
+  });
+
   it('should load session from cookie sid', function (done) {
     var count = 0
     var server = createServer(null, function (req, res) {
@@ -2242,6 +2289,16 @@ function shouldSetCookie (name) {
     var data = header && parseSetCookie(header)
     assert.ok(header, 'should have a cookie header')
     assert.strictEqual(data.name, name, 'should set cookie ' + name)
+  }
+}
+
+function shouldSetCookieWithPlaceholder(name, placeholder) {
+  return function (res) {
+    var header = cookie(res)
+    var data = header && parseSetCookie(header);
+    assert.ok(header, 'should have a cookie header')
+    assert.strictEqual(data.name, name, 'should set cookie ' + name)
+    assert.notEqual(data.value.indexOf(placeholder), -1, 'should contain ' + placeholder);
   }
 }
 
