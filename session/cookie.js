@@ -33,13 +33,15 @@ var Cookie = module.exports = function Cookie(options) {
     }
 
     for (var key in options) {
-      this[key] = options[key]
+      if (key !== 'data') {
+        this[key] = options[key]
+      }
     }
   }
 
-  this.originalMaxAge = undefined == this.originalMaxAge
-    ? this.maxAge
-    : this.originalMaxAge;
+  if (this.originalMaxAge === undefined || this.originalMaxAge === null) {
+    this.originalMaxAge = this.maxAge
+  }
 };
 
 /*!
@@ -87,7 +89,7 @@ Cookie.prototype = {
       deprecate('maxAge as Date; pass number of milliseconds instead')
     }
 
-    this.expires = 'number' == typeof ms
+    this.expires = typeof ms === 'number'
       ? new Date(Date.now() + ms)
       : ms;
   },

@@ -19,7 +19,7 @@ $ npm install express-session-with-placeholder
 You can use this package as the real express-session.
 To use the placeholder just store your data in ``req.placeholder``.
 ```js
-app.post('/sign-in', async (req, res) => {
+app.post('/sign-in', (req, res) => {
   // ...
 
   req.placeholder = 'foo';
@@ -30,7 +30,7 @@ app.post('/sign-in', async (req, res) => {
 Your placeholder is now stored in ``req.placeholder`` if the cookie
 is correctly set.
 ```js
-app.get('/bar', async (req, res) => {
+app.get('/bar', (req, res) => {
   if (res.placeholder !== 'foo') {
     return res.status(403).end();
   }

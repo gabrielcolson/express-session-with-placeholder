@@ -150,7 +150,7 @@ function session(options) {
   // notify user that this store is not
   // meant for a production environment
   /* istanbul ignore next: not tested */
-  if ('production' == env && store instanceof MemoryStore) {
+  if (env === 'production' && store instanceof MemoryStore) {
     console.warn(warning);
   }
 
@@ -367,6 +367,19 @@ function session(options) {
       wrapmethods(req.session);
     }
 
+    // inflate the session
+    function inflate (req, sess) {
+      store.createSession(req, sess)
+      originalId = req.sessionID
+      originalHash = hash(sess)
+
+      if (!resaveSession) {
+        savedHash = originalHash
+      }
+
+      wrapmethods(req.session)
+    }
+
     // wrap session methods
     function wrapmethods(sess) {
       var _reload = sess.reload
@@ -447,7 +460,7 @@ function session(options) {
         return false;
       }
 
-      return cookieId != req.sessionID
+      return cookieId !== req.sessionID
         ? saveUninitializedSession || isModified(req.session)
         : rollingSessions || req.session.cookie.expires != null && isModified(req.session);
     }
@@ -464,34 +477,26 @@ function session(options) {
     debug('fetching %s', req.sessionID);
     store.get(req.sessionID, function(err, sess){
       // error handling
-      if (err) {
+      if (err && err.code !== 'ENOENT') {
         debug('error %j', err);
-
-        if (err.code !== 'ENOENT') {
-          next(err);
-          return;
-        }
-
-        generate();
-      // no session
-      } else if (!sess) {
-        debug('no session found');
-        generate();
-      // populate req.session
-      } else {
-        debug('session found');
-        store.createSession(req, sess);
-        originalId = req.sessionID;
-        originalHash = hash(sess);
-
-        if (!resaveSession) {
-          savedHash = originalHash
-        }
-
-        wrapmethods(req.session);
+        next(err)
+        return
       }
 
-      next();
+      try {
+        if (err || !sess) {
+          debug('no session found')
+          generate()
+        } else {
+          debug('session found')
+          inflate(req, sess)
+        }
+      } catch (e) {
+        next(e)
+        return
+      }
+
+      next()
     });
   };
 };
