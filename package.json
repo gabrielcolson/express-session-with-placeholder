@@ -1,6 +1,6 @@
 {
   "name": "express-session-with-placeholder",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Simple fork of Express session middleware",
   "author": "Gabriel Colson (http://github.com/gabrielcolson)",
   "homepage": "https://github.com/gabrielcolson/express-session-with-placeholder#readme",
